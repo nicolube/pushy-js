@@ -27,6 +27,12 @@ textArray = [
         "wall1",
         "wall2"
     ],
+    [
+        "house-green",
+        "house-yellow",
+        "house",
+        "crate"
+    ],
 
 ]
 
