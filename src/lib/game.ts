@@ -5,6 +5,8 @@ export class Game {
 
     constructor() {
         this.map.updateMap();
+        console.log("asd");
+        
     }
 
     getDirectionPos = (direction: Direction, x: number, y: number) => {
