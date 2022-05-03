@@ -28,11 +28,14 @@ textArray = [
         "wall2"
     ],
     [
+        "house",
         "house-green",
         "house-yellow",
-        "house",
-        "crate"
+        "crate",
     ],
+    [
+        "remove"
+        ]
 
 ]
 

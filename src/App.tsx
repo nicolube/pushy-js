@@ -7,7 +7,7 @@ import PushyEditor from './components/PushyEditor';
 function App() {
   return (
     <div className="App">
-    <Pushy/>
+    <PushyEditor/>
     </div>
   );
 }

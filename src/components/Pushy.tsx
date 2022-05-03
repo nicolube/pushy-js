@@ -11,17 +11,18 @@ type State = {}
 
 class Pushy extends Component<Props, State> {
     private init = false;
-    game: Game = new Game()
+    game?: Game;
     soundManager?: SoundManager;
 
     size: number = 64;
     scale: number = 1;
 
     setup = (p5: P5, parent: Element) => {
+        this.soundManager = new SoundManager();
+        this.game = new Game(this.soundManager)
         p5.createCanvas(this.game.map.width * this.size, this.game.map.height * this.size).parent(parent);
         if (this.init) return;
         this.init = true
-        this.soundManager = new SoundManager();
     } 
 
     drawComponent = (p5: P5, component: MapComponent, x: number, y: number) => {
@@ -37,6 +38,7 @@ class Pushy extends Component<Props, State> {
     }
 
     draw = (p5: P5) => {
+        if (!this.game) return;
         for (let x = 0; x < this.game.map.width; x++) {
             for (let y = 0; y < this.game.map.height; y++) {
                 if ((x + y) % 2)
@@ -52,10 +54,10 @@ class Pushy extends Component<Props, State> {
     }
 
     keyPressed = (p5: P5) => {
+        if (!this.game) return;
         switch (p5.key.toLowerCase()) {
             case 'w':
                 this.game.onPlayerMove(0, Direction.NORTH);
-                this.soundManager?.play(Sounds.BOX_MOVE);
                 break
             case 'd':
                 this.game.onPlayerMove(0, Direction.EAST);

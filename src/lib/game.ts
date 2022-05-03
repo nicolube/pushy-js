@@ -1,12 +1,13 @@
-import { Ball, ComponentContainer, Direction, Field, GameMap, Paint } from "./map";
+import { Ball, ComponentContainer, Crate, Direction, Field, GameMap, Paint } from "./map";
+import { SoundManager, Sounds } from "./sounds";
 
 export class Game {
+    private soundManager: SoundManager
     map = new GameMap(20, 12);
 
-    constructor() {
+    constructor(soundManager: SoundManager) {
         this.map.updateMap();
-        console.log("asd");
-        
+        this.soundManager = soundManager;
     }
 
     getDirectionPos = (direction: Direction, x: number, y: number) => {
@@ -30,17 +31,20 @@ export class Game {
                         let paint = mComp.get() as Paint;
                         ball.color = paint.color;
                         this.map.remove(mComp);
+                        this.soundManager.play(Sounds.SQISH);
                     }
                     if (mComp.get() instanceof Field) {
                         let field = mComp.get() as Field;
-
                         if (ball.color !== field.color) return false;
                         this.map.remove(comp);
+                        this.soundManager.play(Sounds.PLING);
                         return true;
                     }
                 } else
                     return false;
             };
+            if (comp.get() instanceof Crate)
+                this.soundManager.play(Sounds.BOX_MOVE);
             comp.x = mx;
             comp.y = my
         }

@@ -6,6 +6,12 @@ export enum Color {
     RED,
 }
 
+export enum HouseType {
+    NORMAL,
+    GREEN,
+    YELLOW,
+}
+
 export enum Direction {
     NORTH,
     EAST,
@@ -16,6 +22,11 @@ export enum Direction {
 export abstract class MapComponent {
     protected moveable = false;
     protected solid = true;
+    protected serIdentifier: string;
+
+    constructor(serIdentifier: string) {
+        this.serIdentifier = serIdentifier;
+    }
 
     isMoveable = () => {
         return this.moveable;
@@ -26,10 +37,18 @@ export abstract class MapComponent {
     }
 
     abstract getTexture(): Textures;
+
+    serialize = (): string => {
+        return this.serIdentifier;
+    }
 }
 
 export class Wall extends MapComponent {
     rand = Math.random()
+
+    constructor() {
+        super("W")
+    }
 
     getTexture = (): Textures => {
         if (this.rand < .8)
@@ -41,7 +60,7 @@ export class Wall extends MapComponent {
 
 export class Crate extends MapComponent {
     constructor() {
-        super();
+        super("C");
         this.moveable = true;
     }
     getTexture = (): Textures => {
@@ -49,20 +68,18 @@ export class Crate extends MapComponent {
     }
 }
 
-export class Home extends MapComponent {
-    getTexture = (): Textures => {
-        return Textures.HOUSE;
-    }
-
-}
-
 export abstract class ColoredComponent extends MapComponent {
 
     color: Color
 
-    constructor(color: Color) {
-        super()
+    constructor(serIdentifier: string, color: Color) {
+        super(serIdentifier)
         this.color = color;
+    }
+
+
+    serialize = (): string => {
+        return `${this.serIdentifier},${this.color}`;
     }
 
 }
@@ -70,7 +87,7 @@ export abstract class ColoredComponent extends MapComponent {
 export class Ball extends ColoredComponent {
 
     constructor(color: Color) {
-        super(color);
+        super("B", color);
         this.moveable = true;
     }
 
@@ -82,7 +99,7 @@ export class Ball extends ColoredComponent {
 export class Field extends ColoredComponent {
 
     constructor(color: Color) {
-        super(color);
+        super("F", color);
         this.solid = false;
     }
 
@@ -91,10 +108,27 @@ export class Field extends ColoredComponent {
     }
 }
 
+export class House extends MapComponent {
+    type: HouseType
+    constructor(type: HouseType) {
+        super("H");
+        this.type = type;
+        this.solid = false;
+    }
+
+    getTexture = (): Textures => {
+        return Textures.HOUSE_GREEN + this.type;
+    }
+
+    serialize = (): string => {
+        return `${this.serIdentifier},${this.type}`;
+    }
+}
+
 export class Paint extends ColoredComponent {
 
     constructor(color: Color) {
-        super(color);
+        super("D", color);
         this.solid = false;
     }
 
@@ -110,7 +144,7 @@ export class Player extends MapComponent {
     y: number = 0;
 
     constructor(id: number) {
-        super()
+        super("P")
         this.id = id;
     }
     getTexture = () => {
@@ -123,6 +157,10 @@ export class Player extends MapComponent {
 
     getPosition = () => {
         return [this.x, this.y];
+    }
+
+    serialize = (): string => {
+        return `${this.serIdentifier},${this.id}`;
     }
 }
 
@@ -140,6 +178,13 @@ export class ComponentContainer {
     get = () => {
         return this.component;
     }
+}
+
+
+export interface MapData {
+    width: number,
+    height: number,
+    content: (null | string)[][],
 }
 
 export class GameMap {
@@ -165,14 +210,6 @@ export class GameMap {
             this.content[0][y] = new Wall();
             this.content[width - 1][y] = new Wall();
         }
-
-        this.content[5][5] = new Player(0);
-        this.content[5][4] = new Player(1);
-        this.content[5][6] = new Ball(Color.GREEN);
-        this.content[5][7] = new Paint(Color.BLUE);
-        this.content[16][8] = new Field(Color.RED);
-        this.content[5][8] = new Field(Color.BLUE);
-        this.content[4][5] = new Crate();
     }
 
     updateMap = () => {
@@ -206,9 +243,63 @@ export class GameMap {
     remove = (cc: ComponentContainer) => {
         if (cc.get().isMoveable())
             this.movables = this.movables.filter(e => cc !== e);
-        else 
+        else
             this.statics = this.statics.filter(e => cc !== e);
-        
+
     }
 
+    serialize = (): MapData => {
+        let data: (null | string)[][] = [];
+        for (let x = 0; x < this.width; x++) {
+            let collumn: (null | string)[] = [];
+            for (let y = 0; y < this.height; y++) {
+                if (this.content[x][y])
+                    collumn.push(this.content[x][y].serialize());
+                else {
+                    collumn.push(null)
+                }
+            }
+            data.push(collumn);
+        }
+        return {
+            width: this.width,
+            height: this.height,
+            content: data
+        }
+    }
+
+    private static componentFromStaring = (raw: string): MapComponent | undefined => {
+        let indentifier = raw[0];
+        switch (indentifier) {
+            case "W":
+                return new Wall();
+            case "C":
+                return new Crate();
+            case "B":
+                return new Ball(parseInt(raw.split(",")[1]));
+            case "D":
+                return new Paint(parseInt(raw.split(",")[1]));
+            case "F":
+                return new Field(parseInt(raw.split(",")[1]));
+            case "H":
+                return new House(parseInt(raw.split(",")[1]));
+            case "P":
+                return new Player(parseInt(raw.split(",")[1]));
+        }
+    }
+
+    static deserialize = (mapData: MapData) => {
+        let data: (null | string)[][] = mapData.content;
+        let result = new GameMap(mapData.width, mapData.height);
+        for (let x = 0; x < mapData.width; x++) {
+            for (let y = 0; y < mapData.height; y++) {
+                let compString = data[x][y];
+                if (!compString) continue;
+                let comp = this.componentFromStaring(compString)
+                if (comp)
+                    result.content[x][y] = comp;
+            }
+        }
+        return result
+    }
 }

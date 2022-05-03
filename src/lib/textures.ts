@@ -17,7 +17,8 @@ export enum Textures {
     HOUSE_GREEN = 16,
     HOUSE_YELLOW,
     HOUSE,
-    CRATE
+    CRATE,
+    REMOVE
 }
 
 var atlas: Image;
