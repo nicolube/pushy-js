@@ -139,7 +139,7 @@ export class Paint extends ColoredComponent {
 
 export class Player extends MapComponent {
     id: number
-    direction: Direction = Direction.WEST;
+    direction: Direction = Direction.NORTH;
     x: number = 0;
     y: number = 0;
 
@@ -213,6 +213,9 @@ export class GameMap {
     }
 
     updateMap = () => {
+        this.statics = [];
+        this.movables = [];
+        this.players = [];
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 let comp = this.content[x][y];

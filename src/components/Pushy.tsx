@@ -2,11 +2,13 @@ import { Component } from 'react'
 import P5 from "p5";
 import Sketch from 'react-p5';
 import { Game } from '../lib/game';
-import { Direction, MapComponent, Player } from '../lib/map';
+import { Direction, GameMap, MapComponent, Player } from '../lib/map';
 import { getTexture } from '../lib/textures';
-import { SoundManager, Sounds } from '../lib/sounds';
+import { SoundManager } from '../lib/sounds';
 
-type Props = {}
+type Props = {
+    map?: GameMap
+}
 type State = {}
 
 class Pushy extends Component<Props, State> {
@@ -19,7 +21,7 @@ class Pushy extends Component<Props, State> {
 
     setup = (p5: P5, parent: Element) => {
         this.soundManager = new SoundManager();
-        this.game = new Game(this.soundManager)
+        this.game = new Game(this.soundManager, this.props.map)
         p5.createCanvas(this.game.map.width * this.size, this.game.map.height * this.size).parent(parent);
         if (this.init) return;
         this.init = true

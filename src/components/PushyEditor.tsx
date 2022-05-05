@@ -1,10 +1,18 @@
 import P5 from 'p5'
-import React, { Component } from 'react'
+import { Component, useState } from 'react'
 import Sketch from 'react-p5'
+import { NavigateFunction, useNavigate } from 'react-router-dom'
 import { Ball, Color, Crate, Field, GameMap, House, HouseType, MapComponent, Paint, Player, Wall } from '../lib/map'
 import { getTexture, Textures } from '../lib/textures'
+import { download } from '../lib/unit'
+import Pushy from './Pushy'
 
-type Props = {}
+type Props = {
+  map?: GameMap
+  setMap: (map: GameMap) => any
+  setTesting: (state: boolean) => any
+  navigate: NavigateFunction
+}
 
 type State = {}
 
@@ -31,15 +39,15 @@ const tools: MapComponent[] = [
   new RemoveTool("-"),
 ]
 
-export default class PushyEditor extends Component<Props, State> {
-  state = {}
-
+class Editor extends Component<Props, State> {
   size: number = 64;
   map = new GameMap(20, 12);
   toolOffset = [(this.map.width - tools.length) / 2, (this.map.height + .25)];
   tool?: MapComponent;
 
   setup = (p5: P5, parent: Element) => {
+    if (this.props.map)
+      this.map = this.props.map;
     p5.createCanvas(this.map.width * this.size, (this.map.height + 1.5) * this.size).parent(parent);
   }
 
@@ -94,7 +102,7 @@ export default class PushyEditor extends Component<Props, State> {
     if (my > this.map.height) {
       mx = Math.floor(mx - this.toolOffset[0]);
       my = Math.floor(my - this.toolOffset[1]);
-      if (my == 0 && mx < tools.length)
+      if (my === 0 && mx < tools.length)
         this.tool = tools[mx];
     } else {
       if (!this.tool) return;
@@ -113,7 +121,8 @@ export default class PushyEditor extends Component<Props, State> {
   }
 
   test = () => {
-    this.map = GameMap.deserialize(this.map.serialize());
+    this.props.setMap(GameMap.deserialize(this.map.serialize()));
+    this.props.setTesting(true);
   }
 
   render() {
@@ -121,8 +130,26 @@ export default class PushyEditor extends Component<Props, State> {
     return (
       <div>
         <Sketch setup={this.setup} draw={this.draw} mouseClicked={this.mouseClicked} mouseDragged={this.mouseClicked} />
-        <button onClick={this.test}>PrintMap</button>
+        <button onClick={this.test}>Test Map</button>
+        <button onClick={() => download("map.json", JSON.stringify(this.map.serialize()))}>Download</button>
       </div>
     )
   }
+}
+
+export const PushyEditor = () => {
+  const [testMap, setTestMap] = useState<GameMap | undefined>(undefined);
+  const [testing, setTesting] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <>
+      
+      {testing ? <>
+      <Pushy map={testMap} />
+      <button onClick={() => setTesting(false)}>Exit</button>
+      </>: <Editor navigate={navigate} setMap={setTestMap} map={testMap} setTesting={setTesting} />}
+      
+    </>
+  );
 }

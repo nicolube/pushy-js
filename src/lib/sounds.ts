@@ -1,4 +1,3 @@
-import P5 from 'p5'
 export enum Sounds {
     BOX_MOVE,
     SQISH,

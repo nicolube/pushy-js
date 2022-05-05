@@ -1,13 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
+
 import './App.css';
 import Pushy from './components/Pushy';
-import PushyEditor from './components/PushyEditor';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+import { PushyEditor } from './components/PushyEditor';
 
 function App() {
+
   return (
     <div className="App">
-    <PushyEditor/>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/">
+            <Route path='editor' element={<PushyEditor/>}/>
+            <Route path="*" element={<Pushy/>} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
